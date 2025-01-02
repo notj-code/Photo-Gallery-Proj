@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log In</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        .form-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+
+        .form-container input {
+            width: 100%;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .form-container button {
+            width: 100%;
+            padding: 0.5rem;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .form-container button:hover {
+            background-color: #555;
+        }
+
+        .form-container a {
+            display: block;
+            margin-top: 1rem;
+            color: #333;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Log In</h2>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="logIn()">Log In</button>
+        <a href="signup.html">Don't have an account? Sign up</a>
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://your-supabase-url.supabase.co';
+        const supabaseKey = 'your-supabase-anon-key';
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        async function logIn() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const { user, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) {
+                alert('Error logging in: ' + error.message);
+            } else {
+                alert('Logged in successfully!');
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+</body>
+</html>
