@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Album</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <style>
+      body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .photo-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            padding: 2rem;
+        }
+
+        .photo {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+            background-color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .photo img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem;
+            background-color: #333;
+            color: white;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1 id="album-title">Album</h1>
+    </header>
+
+    <main>
+        <div class="upload-photo">
+            <input type="file" id="photo-input">
+            <button onclick="uploadPhoto()">Upload Photo</button>
+        </div>
+
+        <div class="photo-gallery" id="photo-gallery">
+            <!-- 사진 목록이 동적으로 추가됩니다 -->
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 My Photo Gallery</p>
+    </footer>
+
+    <script>
+        const supabaseUrl = 'https://your-supabase-url.supabase.co';
+        const supabaseKey = 'your-supabase-anon-key';
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        const params = new URLSearchParams(window.location.search);
+        const albumId = params.get('id');
+
+        async function fetchPhotos() {
+            const { data: photos, error } = await supabase
+                .from('photos')
+                .select('*')
+                .eq('album_id', albumId);
+            if (error) {
+                console.error('Error fetching photos:', error.message);
+                return;
+            }
+
+            const photoGallery = document.getElementById('photo-gallery');
+            photoGallery.innerHTML = '';
+            photos.forEach(photo => {
+                const photoDiv = document.createElement('div');
+                photoDiv.className = 'photo';
+                photoDiv.innerHTML = `
+                    <img src="${photo.url}" alt="Photo">
+                `;
+                photoGallery.appendChild(photoDiv);
+            });
+        }
+
+        async function uploadPhoto() {
+            const photoInput = document.getElementById('photo-input');
+            const file = photoInput.files[0];
+            if (!file) {
+                alert('Please select a photo to upload!');
+                return;
+            }
+
+            const { data: storageData, error: storageError } = await supabase
+                .storage
+                .from('photos')
+                .upload(`album-${albumId}/${file.name}`, file);
+            if (storageError) {
+                console.error('Error uploading photo:', storageError.message);
+                return;
+            }
+
+            const photoUrl = `${supabaseUrl}/storage/v1/object/public/photos/album-${albumId}/${file.name}`;
+            const { error: dbError } = await supabase
+                .from('photos')
+                .insert([{ album_id: albumId, url: photoUrl }]);
+            if (dbError) {
+                console.error('Error saving photo to database:', dbError.message);
+                return;
+            }
+
+            fetchPhotos(); // Refresh photo gallery
+        }
+
+        // Fetch album title and photos on page load
+        async function fetchAlbum() {
+            const { data: album, error } = await supabase
+                .from('albums')
+                .select('*')
+                .eq('id', albumId)
+                .single();
+            if (error) {
+                console.error('Error fetching album:', error.message);
+                return;
+            }
+
+            document.getElementById('album-title').textContent = album.title;
+        }
+
+        fetchAlbum();
+        fetchPhotos();
+    </script>
+</body>
+</html>
